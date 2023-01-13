@@ -840,34 +840,8 @@ void DecodeSerialCMD(const char * InputCMD) {
       }//Callsign
 
       //Callsign Sufix [DSF]
-      if ((InputCMD[2] == 'S') && (InputCMD[3] == 'F')) {
-        if (InputCMD[6] == 'S') { //Set option
-          CharInt[0] = InputCMD[8]; CharInt[1] = InputCMD[9]; CharInt[2] = InputCMD[10]; CharInt[3] = 0;
-          GadgetData.WSPRData.Sufix = atoi(CharInt);
-        }
-        else //Get
-        {
-          Serial.print (F("{DSF} "));
-          if (GadgetData.WSPRData.Sufix < 100)SerialPrintZero();
-          if (GadgetData.WSPRData.Sufix < 10) SerialPrintZero();
-          Serial.println (GadgetData.WSPRData.Sufix);
-        }
-      }//Callsign Sufix
 
       //Callsing Prefix  [DPF]
-      if ((InputCMD[2] == 'P') && (InputCMD[3] == 'F')) {
-        if (InputCMD[6] == 'S') { //Set option
-          for (int i = 0; i <= 2; i++) {
-            GadgetData.WSPRData.Prefix[i] = InputCMD[i + 8];
-          }
-          GadgetData.WSPRData.Prefix[3] = 0;
-        }
-        else //Get
-        {
-          Serial.print (F("{DPF} "));
-          Serial.println (GadgetData.WSPRData.Prefix);
-        }
-      }//Callsign Prefix
 
       //Locator 4
       if ((InputCMD[2] == 'L') && (InputCMD[3] == '4')) {
@@ -951,6 +925,7 @@ void DecodeSerialCMD(const char * InputCMD) {
 
     //Factory data
     if (InputCMD[1] == 'F') {
+      //I think we should print inputCMD to just see what all these outputs are
 
       //Product model Number
       if ((InputCMD[2] == 'P') && (InputCMD[3] == 'N')) {
@@ -1153,7 +1128,7 @@ String  uint64ToStr (uint64_t p_InNumber, boolean p_LeadingZeros)
 
 void DoSignalGen ()
 {
-  if (Si5351I2CAddress == 0)
+  if (Si5351I2CAddress == 0) //needed?
   {
     Serial.println (F("{MIN}Hardware ERROR! No Si5351 PLL device found on the I2C buss!"));
   }
@@ -1192,7 +1167,7 @@ void DoWSPR ()
   {
     WSPRMessageTypeToUse = 1;
   }
-  else //No Suffix. 
+  else //No Suffix - needed?
   {
     WSPRMessageTypeToUse = 2;
   }
@@ -1205,7 +1180,7 @@ void DoWSPR ()
     CurrentMode = WSPRBeacon;
     ConfigError = false;
 
-//All shit for humans. 
+//All shit for humans. - needed?
 
     //Make sure at least one band is enabled for tranmission
     if (NoBandEnabled ())
@@ -1217,7 +1192,7 @@ void DoWSPR ()
     //Make sure  call sign is set
     if ((GadgetData.WSPRData.CallSign[0] == 'A') && (GadgetData.WSPRData.CallSign[1] == 'A') && (GadgetData.WSPRData.CallSign[2] == '0') && (GadgetData.WSPRData.CallSign[3] == 'A') && (GadgetData.WSPRData.CallSign[4] == 'A') && (GadgetData.WSPRData.CallSign[5] == 'A')) //Do not actually key the transmitter if the callsign has not been changed from the default one AA0AAA
     {
-      Serial.println(F("{MIN}Call Sign not set"));
+      Serial.println(F("{MIN}Call Sign not set")); // THIS MAY BE A PLACE TO SET CALLSIGNS
       ConfigError = true;
     }
 
@@ -1442,7 +1417,7 @@ void calcLocator(double lat, double lon) {
   GadgetData.WSPRData.MaidenHead6[6] = 0;
 }
 
-boolean NewPosition () //Returns true if the postion has changed since the last transmission
+boolean NewPosition () //Returns true if the postion has changed since the last transmission - Do we care?
 {
   boolean NewPos = false;
    for (int i = 0; i < GadgetData.WSPRData.LocationPrecision ; i++) //Check if the position has changed, test it using either four or six letter Maidenhead precision based on user setting
