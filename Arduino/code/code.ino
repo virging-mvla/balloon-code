@@ -298,7 +298,7 @@ uint8_t power;
 
 //GeoFence grids by Matt Downs - 2E1GYP and Harry Zachrisson - SM7PNV , save some RAM by putting the string in program memmory
 //These are grids that are illegal to transmit over.  (366 Bytes). Constant makes it in program memory. 
-const char NoTXGrids[] PROGMEM = {"IO78 IO88 IO77 IO87 IO76 IO86 IO75 IO85 IO84 IO94 IO83 IO93 IO82 IO92 JO02 IO81 IO91 JO01 IO70 IO80 IO90 IO64 PN31 PN41 PN20 PN30 PN40 PM29 PM39 PM28 PM38 LK16 LK15 LK14 LK13 LK23 LK24 LK25 LK26 LK36 LK35 LK34 LK33 LK44 LK45 LK46 LK47 LK48 LK58 LK57 LK56 LK55"}; //Airborne transmissions of this sort are not legal over the UK, North Korea, or Yemen.
+// const char NoTXGrids[] PROGMEM = {"IO78 IO88 IO77 IO87 IO76 IO86 IO75 IO85 IO84 IO94 IO83 IO93 IO82 IO92 JO02 IO81 IO91 JO01 IO70 IO80 IO90 IO64 PN31 PN41 PN20 PN30 PN40 PM29 PM39 PM28 PM38 LK16 LK15 LK14 LK13 LK23 LK24 LK25 LK26 LK36 LK35 LK34 LK33 LK44 LK45 LK46 LK47 LK48 LK58 LK57 LK56 LK55"}; //Airborne transmissions of this sort are not legal over the UK, North Korea, or Yemen.
 
 uint8_t Si5351I2CAddress;  //The I2C address on the Si5351 as detected on startup
 uint8_t CurrentBand = 0;   //Keeps track on what band we are currently tranmitting on
@@ -1253,7 +1253,7 @@ void DoWSPR ()
             }
             if ( (GPSS == 00) && (CorrectTimeslot ()) )//If second is zero at even minute then start WSPR transmission. The function CorrectTimeSlot can hold of transmision depending on several user settings. The GadgetData.WSPRData.TimeSlotCode value will influense the behaviour
             {
-              if ( (PCConnected) || (Product_Model != 1028) || ((Product_Model == 1028) && OutsideGeoFence ()))//On the WSPR-TX Pico make sure were are outside the territory of UK, Yemen and North Korea before the transmitter is started but allow tranmissions inside the Geo-Fence if a PC is connected so UK users can make test tranmissions on the ground before relase of Picos
+              if ( (PCConnected) || (Product_Model != 1028) || ((Product_Model == 1028)))//On the WSPR-TX Pico make sure were are outside the territory of UK, Yemen and North Korea before the transmitter is started but allow tranmissions inside the Geo-Fence if a PC is connected so UK users can make test tranmissions on the ground before relase of Picos
               {
                 GPSGoToSleep();//Put GPS to sleep to save power
                 // -------------------- Altitude coding to Power ------------------------------------
@@ -2358,99 +2358,6 @@ void Si5351PowerOn ()
     si5351aOutputOff(SI_CLK0_CONTROL);
   }
 }
-/*
-  //Sleep code from Kevin Darrah https://www.youtube.com/watch?v=urLSDi7SD8M
-  void MCUGoToSleep( int SleepTime)//Sleep time in seconds, accurate to the nearest 8 seconds
-  {
-  int SleepLoop;
-  SleepLoop = SleepTime / 8.8 ; // every sleep period is 8.8 seconds
-  GPSSerial.end();//Must turn off software serialport or sleep will not work
-  //Serial.end(); //Turn off Hardware serial port as well as we will temporary change all ports to outputs
-  AllIOtoLow ();  //Set all IO pins to outputs to save power
-  DisableADC ();  //Turn off ADC to save power
-
-  //SETUP WATCHDOG TIMER
-  WDTCSR = (24);//change enable and WDE - also resets
-  WDTCSR = (33);//prescalers only - get rid of the WDE and WDCE bit
-  WDTCSR |= (1 << 6); //enable interrupt mode
-
-  //ENABLE SLEEP - this enables the sleep mode
-  SMCR |= (1 << 2); //power down mode
-  SMCR |= 1;//enable sleep
-  for (int i = 0; i < SleepLoop; i++)//sleep for eight second intervals untill SleepTime is reached
-  {
-    //BOD DISABLE - this must be called right before the __asm__ sleep instruction
-    MCUCR |= (3 << 5); //set both BODS and BODSE at the same time
-    MCUCR = (MCUCR & ~(1 << 5)) | (1 << 6); //then set the BODS bit and clear the BODSE bit at the same time
-    __asm__  __volatile__("sleep");//in line assembler to go to sleep
-    //Just woke upp after 8 seconds of sleep, do a short blink to indicate that I'm still running
-    digitalWrite(StatusLED, HIGH);
-    delay (30);
-    digitalWrite(StatusLED, LOW);
-  }
-  //Restore everything
-  EnableADC ();
-  GPSSerial.begin(9600); //Init software serial port to communicate with the on-board GPS module
-  }
-
-  //Sleep code from Kevin Darrah https://www.youtube.com/watch?v=urLSDi7SD8M
-  void AllIOtoLow ()
-  {
-  //  Save Power by setting all IO pins to outputs and setting them either low or high
-  // (for some odd reason the ATMEga328 takes less power when this is done instead of having IO pins as inputs during sleep, see more in Kevin Darrahs YouTube Videos)
-  pinMode(A0, OUTPUT);
-  digitalWrite(A0, LOW);
-
-  pinMode(A6, OUTPUT);
-  digitalWrite(A6, LOW);
-
-  pinMode(A7, OUTPUT);
-  digitalWrite(A7, LOW);
-
-  pinMode(10, OUTPUT);
-  digitalWrite(10, LOW);
-
-  pinMode(11, OUTPUT);
-  digitalWrite(11, LOW);
-
-  pinMode(12, OUTPUT);
-  digitalWrite(12, LOW);
-
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
-
-  pinMode(4, OUTPUT);
-  digitalWrite(4, LOW);
-
-  pinMode(5, OUTPUT);
-  digitalWrite(5, LOW);
-
-  pinMode(6, OUTPUT);
-  digitalWrite(6, LOW);
-
-  pinMode(7, OUTPUT);
-  digitalWrite(7, LOW);
-
-  pinMode(8, OUTPUT);
-  digitalWrite(8, LOW);
-
-  pinMode(9, OUTPUT);
-  digitalWrite(9, LOW);
-
-  }
-
-  void DisableADC ()
-  {
-  //Disable ADC - don't forget to flip back after waking up if using ADC in your application ADCSRA |= (1 << 7);
-  ADCSRA &= ~(1 << 7);
-  }
-
-  void EnableADC ()
-  {
-  //Enable ADC again
-  ADCSRA |= (1 << 7);
-  }
-*/
 
 void SerialPrintZero()
 {
@@ -2856,24 +2763,6 @@ uint8_t wspr_code(char c)
 //GeoFence, do not transmit over Yemen, North Korea and the UK
 //GeoFence code by Matt Downs - 2E1GYP and Harry Zachrisson - SM7PNV
 //Defined by the NoTXGrids that holds all the Maidehead grids for these locations
-boolean OutsideGeoFence ()
-{
-  char TestGrid[4];
-  boolean Outside;
-
-  Outside = true;
-  for (int GridLoop = 0; GridLoop < strlen_P(NoTXGrids); GridLoop = GridLoop + 5) {//Itterate between Geo-Fenced grids
-    for (int CharLoop = 0; CharLoop < 4; CharLoop++) {
-      TestGrid[CharLoop] = pgm_read_byte_near (NoTXGrids + CharLoop + GridLoop); //Copy a Grid string from program memory to RAM variable.
-    }
-    if ((GadgetData.WSPRData.MaidenHead4[0] == TestGrid[0]) && (GadgetData.WSPRData.MaidenHead4[1] == TestGrid[1]) && (GadgetData.WSPRData.MaidenHead4[2] == TestGrid[2]) && (GadgetData.WSPRData.MaidenHead4[3] == TestGrid[3])) {
-      Outside = false; //We found a match between the current location and a Geo-Fenced Grid
-    }
-  }
-
-  return Outside;
-}
-
 
 
 //Type 3 call sign hash by RFZero www.rfzero.net modified by SM7PNV
